@@ -6,7 +6,7 @@ PetCare AI is a modern, responsive, AI-powered pet care web application built wi
 
 ## 🚀 Live Demo
 
-**Frontend:** https://your-frontend-url.vercel.app
+**Frontend:**https://petcare-ai.vercel.app
 
 ---
 
