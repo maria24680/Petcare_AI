@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
     Mail, Lock, User, Eye, EyeOff, Phone,
-    Store, Building, FileText, Globe, Loader2
+    Store, Building, FileText, Globe, Loader2, Chrome
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth';
+import { GoogleIcon } from '@/components/ui/GoogleIcon';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,8 +39,9 @@ interface FormErrors {
 }
 
 export default function VendorRegisterPage() {
-    const { registerVendor } = useAuth();
+    const { registerVendor, loginWithGoogle, loading: authLoading } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<FormErrors>({});
@@ -142,6 +144,17 @@ export default function VendorRegisterPage() {
         }
     };
 
+    const handleGoogleRegister = async () => {
+        setGoogleLoading(true);
+        setError('');
+        try {
+            await loginWithGoogle();
+        } catch (err: any) {
+            setError(err.message || 'Google registration failed. Please try again.');
+            setGoogleLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-[#F8F6F2]">
             <div className="max-w-2xl mx-auto">
@@ -159,6 +172,30 @@ export default function VendorRegisterPage() {
                             {error}
                         </div>
                     )}
+
+                    {/* Google Register Button */}
+                    <button
+                        type="button"
+                        onClick={handleGoogleRegister}
+                        disabled={googleLoading || loading || authLoading}
+                        className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-[#111844] py-3 rounded-lg font-semibold hover:bg-gray-50 transition disabled:opacity-50 mb-4"
+                    >
+                        {googleLoading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <GoogleIcon />
+                        )}
+                        {googleLoading ? 'Redirecting...' : 'Sign up with Google'}
+                    </button>
+
+                    <div className="relative mb-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-200" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="bg-white px-3 text-gray-400">or sign up with email</span>
+                        </div>
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                         <h3 className="text-lg font-semibold text-[#111844] border-b pb-2">Account Information</h3>
@@ -331,6 +368,22 @@ export default function VendorRegisterPage() {
                         </div>
 
                         <div>
+                            <label className="block text-sm font-medium text-[#111844] mb-1">
+                                Contact Email (Optional)
+                            </label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="email"
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4B5694] focus:border-transparent"
+                                    placeholder="business@example.com"
+                                    value={formData.contactEmail}
+                                    onChange={(e) => handleChange('contactEmail', e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
                             <label className="block text-sm font-medium text-[#111844] mb-3">
                                 Services You Offer
                             </label>
@@ -354,7 +407,7 @@ export default function VendorRegisterPage() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || googleLoading || authLoading}
                             className="w-full flex items-center justify-center gap-2 bg-[#111844] text-white py-3 rounded-lg font-semibold hover:bg-[#4B5694] transition disabled:opacity-50"
                         >
                             {loading && <Loader2 className="w-4 h-4 animate-spin" />}

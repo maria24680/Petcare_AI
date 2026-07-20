@@ -1,4 +1,8 @@
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+import {
+    ButtonHTMLAttributes,
+    forwardRef,
+    ReactNode,
+} from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils/helpers';
 
@@ -33,19 +37,33 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
     loading?: boolean;
     fullWidth?: boolean;
+    icon?: ReactNode;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant, size, loading, fullWidth, children, disabled, ...props }, ref) => {
+    (
+        {
+            className,
+            variant,
+            size,
+            loading,
+            fullWidth,
+            icon,
+            children,
+            disabled,
+            ...props
+        },
+        ref
+    ) => {
         return (
             <button
+                ref={ref}
+                disabled={disabled || loading}
                 className={cn(
                     buttonVariants({ variant, size, className }),
                     fullWidth && 'w-full',
                     loading && 'cursor-wait'
                 )}
-                ref={ref}
-                disabled={disabled || loading}
                 {...props}
             >
                 {loading ? (
@@ -73,7 +91,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                         Loading...
                     </>
                 ) : (
-                    children
+                    <>
+                        {icon && (
+                            <span className="mr-2 flex items-center">
+                                {icon}
+                            </span>
+                        )}
+                        {children}
+                    </>
                 )}
             </button>
         );

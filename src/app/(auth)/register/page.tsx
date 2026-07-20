@@ -29,21 +29,15 @@ function GoogleIcon() {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-interface FormValues {
-    email: string;
-    username: string;
-    fullName: string;
-    password: string;
-    phone: string;
-    address: string;
-}
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 interface FormErrors {
-    email?: string;
-    username?: string;
     fullName?: string;
+    username?: string;
+    email?: string;
     password?: string;
+    phone?: string;
+    address?: string;
 }
 
 export default function RegisterPage() {
@@ -53,19 +47,29 @@ export default function RegisterPage() {
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<FormErrors>({});
-    const [formData, setFormData] = useState<FormValues>({
-        email: '',
-        username: '',
+    const [formData, setFormData] = useState({
         fullName: '',
+        username: '',
+        email: '',
         password: '',
         phone: '',
         address: '',
     });
 
-    const validate = (values: FormValues): FormErrors => {
+    const validate = (values: typeof formData): FormErrors => {
         const next: FormErrors = {};
-        if (!values.fullName.trim()) next.fullName = 'Full name is required';
-        if (!values.username.trim()) next.username = 'Username is required';
+
+        if (!values.fullName.trim()) {
+            next.fullName = 'Full name is required';
+        } else if (values.fullName.trim().length < 2) {
+            next.fullName = 'Full name must be at least 2 characters';
+        }
+
+        if (!values.username.trim()) {
+            next.username = 'Username is required';
+        } else if (!USERNAME_REGEX.test(values.username)) {
+            next.username = 'Username must be 3-20 characters (letters, numbers, underscore)';
+        }
 
         if (!values.email.trim()) {
             next.email = 'Email is required';
@@ -75,18 +79,16 @@ export default function RegisterPage() {
 
         if (!values.password) {
             next.password = 'Password is required';
-        } else if (values.password.length < 8) {
-            next.password = 'Password must be at least 8 characters';
+        } else if (values.password.length < 6) {
+            next.password = 'Password must be at least 6 characters';
         }
 
         return next;
     };
 
-    const handleChange = (field: keyof FormValues, value: string) => {
+    const handleChange = (field: keyof typeof formData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
-        if (errors[field as keyof FormErrors]) {
-            setErrors((prev) => ({ ...prev, [field]: undefined }));
-        }
+        if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
         if (error) setError('');
     };
 
@@ -150,12 +152,12 @@ export default function RegisterPage() {
                         {googleLoading ? 'Redirecting...' : 'Sign up with Google'}
                     </button>
 
-                    <div className="relative my-6">
+                    <div className="relative mb-6">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
+                            <div className="w-full border-t border-gray-200" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-white text-gray-500">or sign up with email</span>
+                            <span className="bg-white px-3 text-gray-400">or sign up with email</span>
                         </div>
                     </div>
 
@@ -168,7 +170,9 @@ export default function RegisterPage() {
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="text"
-                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${errors.fullName ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-[#4B5694]'
+                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${errors.fullName
+                                            ? 'border-red-300 focus:ring-red-400'
+                                            : 'border-gray-200 focus:ring-[#4B5694]'
                                         }`}
                                     placeholder="John Doe"
                                     value={formData.fullName}
@@ -186,7 +190,9 @@ export default function RegisterPage() {
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="text"
-                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${errors.username ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-[#4B5694]'
+                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${errors.username
+                                            ? 'border-red-300 focus:ring-red-400'
+                                            : 'border-gray-200 focus:ring-[#4B5694]'
                                         }`}
                                     placeholder="johndoe"
                                     value={formData.username}
@@ -204,7 +210,9 @@ export default function RegisterPage() {
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="email"
-                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${errors.email ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-[#4B5694]'
+                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${errors.email
+                                            ? 'border-red-300 focus:ring-red-400'
+                                            : 'border-gray-200 focus:ring-[#4B5694]'
                                         }`}
                                     placeholder="you@example.com"
                                     value={formData.email}
@@ -222,7 +230,9 @@ export default function RegisterPage() {
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
-                                    className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${errors.password ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-[#4B5694]'
+                                    className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${errors.password
+                                            ? 'border-red-300 focus:ring-red-400'
+                                            : 'border-gray-200 focus:ring-[#4B5694]'
                                         }`}
                                     placeholder="••••••••"
                                     value={formData.password}
@@ -247,12 +257,16 @@ export default function RegisterPage() {
                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="tel"
-                                    className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4B5694] focus:border-transparent"
+                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4B5694] focus:border-transparent ${errors.phone
+                                            ? 'border-red-300 focus:ring-red-400'
+                                            : 'border-gray-200 focus:ring-[#4B5694]'
+                                        }`}
                                     placeholder="+1234567890"
                                     value={formData.phone}
                                     onChange={(e) => handleChange('phone', e.target.value)}
                                 />
                             </div>
+                            {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
                         </div>
 
                         <div>
@@ -263,12 +277,16 @@ export default function RegisterPage() {
                                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="text"
-                                    className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4B5694] focus:border-transparent"
+                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4B5694] focus:border-transparent ${errors.address
+                                            ? 'border-red-300 focus:ring-red-400'
+                                            : 'border-gray-200 focus:ring-[#4B5694]'
+                                        }`}
                                     placeholder="123 Main St, City"
                                     value={formData.address}
                                     onChange={(e) => handleChange('address', e.target.value)}
                                 />
                             </div>
+                            {errors.address && <p className="text-xs text-red-600 mt-1">{errors.address}</p>}
                         </div>
 
                         <button

@@ -4,17 +4,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { apiClient } from '@/lib/api/client';
 import Link from 'next/link';
-import { Plus, PawPrint, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, PawPrint, Eye, Trash2, Edit, Loader2 } from 'lucide-react';
 
 export default function VendorPetsPage() {
     const { user } = useAuth();
 
-    // Support either `_id` (Mongo convention) or `id`, whichever the backend/auth layer actually returns
-    const userId = user?._id || user?.id;
+    // ✅ FIXED: Use only _id from User type
+    const userId = user?._id;
 
     const { data: pets, isLoading, refetch } = useQuery({
         queryKey: ['vendorPets', userId],
         queryFn: async () => {
+            if (!userId) return [];
             const response = await apiClient.get(`/vendors/${userId}/pets`);
             return response.data.data;
         },
@@ -31,8 +32,13 @@ export default function VendorPetsPage() {
         }
     };
 
-    // Treat missing/undefined data the same as an empty list, so the page never renders blank
-    const petList = pets ?? [];
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-[#4B5694]" />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -42,7 +48,7 @@ export default function VendorPetsPage() {
                     <p className="text-gray-600 mt-1">Manage your pet listings</p>
                 </div>
                 <Link
-                    href="/vendor/add-pet"
+                    href="/dashboard/vendor/add-pet"
                     className="bg-[#111844] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#4B5694] transition"
                 >
                     <Plus className="w-4 h-4" />
@@ -50,23 +56,13 @@ export default function VendorPetsPage() {
                 </Link>
             </div>
 
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-white rounded-xl p-6 card-shadow animate-pulse">
-                            <div className="w-full h-48 bg-gray-200 rounded-lg mb-4"></div>
-                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        </div>
-                    ))}
-                </div>
-            ) : petList.length === 0 ? (
+            {pets?.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 text-center card-shadow">
                     <PawPrint className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-[#111844] mb-2">No Pets Listed</h3>
                     <p className="text-gray-500 mb-4">Start listing your pets for sale</p>
                     <Link
-                        href="/vendor/add-pet"
+                        href="/dashboard/vendor/add-pet"
                         className="bg-[#111844] text-white px-6 py-2 rounded-lg inline-flex items-center gap-2 hover:bg-[#4B5694] transition"
                     >
                         <Plus className="w-4 h-4" />
@@ -75,7 +71,7 @@ export default function VendorPetsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {petList.map((pet: any) => (
+                    {pets?.map((pet: any) => (
                         <div key={pet._id} className="bg-white rounded-xl overflow-hidden card-shadow hover:shadow-lg transition">
                             <div className="relative h-48">
                                 <img
@@ -88,12 +84,12 @@ export default function VendorPetsPage() {
                                         }`}>
                                         {pet.isAvailable ? 'Available' : 'Sold'}
                                     </span>
+                                    {pet.price && (
+                                        <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                            ${pet.price}
+                                        </span>
+                                    )}
                                 </div>
-                                {pet.price && (
-                                    <div className="absolute bottom-2 left-2 bg-[#111844] text-white px-3 py-1 rounded-lg text-sm font-semibold">
-                                        ${pet.price}
-                                    </div>
-                                )}
                             </div>
                             <div className="p-4">
                                 <h3 className="font-semibold text-[#111844] text-lg">{pet.petName}</h3>
@@ -109,6 +105,13 @@ export default function VendorPetsPage() {
                                     >
                                         <Eye className="w-3 h-3" />
                                         View
+                                    </Link>
+                                    <Link
+                                        href={`/dashboard/vendor/edit-pet/${pet._id}`}
+                                        className="flex-1 text-center border border-[#111844] text-[#111844] px-3 py-1.5 rounded-lg text-sm hover:bg-[#111844] hover:text-white transition flex items-center justify-center gap-1"
+                                    >
+                                        <Edit className="w-3 h-3" />
+                                        Edit
                                     </Link>
                                     <button
                                         onClick={() => handleDelete(pet._id)}
